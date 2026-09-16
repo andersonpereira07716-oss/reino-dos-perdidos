@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'caverna_do_dragao_rpg_v6';
+const STORAGE_KEY = 'caverna_do_dragao_rpg_v7';
 
-// Função utilitária para tocar efeitos sonoros simples (Web Audio API)
 const playSound = (type) => {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -40,7 +39,7 @@ const playSound = (type) => {
       osc.stop(ctx.currentTime + 0.2);
     }
   } catch (e) {
-    // Ignora se o navegador bloquear autoplay de áudio antes de interagir
+    // Ignora bloqueios de áudio do navegador
   }
 };
 
@@ -51,7 +50,7 @@ const translations = {
     kills: 'Abates',
     shop: 'Loja de Armas',
     talents: 'Árvore de Talentos',
-    achievements: 'Conquistas / Troféus',
+    achievements: 'Conquistas',
     adButton: '📺 Assistir Anúncio (+500 Ouro)',
     prestige: 'Prestígio / Reset',
     insufficientGold: 'Ouro insuficiente!',
@@ -73,7 +72,7 @@ const translations = {
     kills: 'Kills',
     shop: 'Weapon Shop',
     talents: 'Talent Tree',
-    achievements: 'Achievements / Trophies',
+    achievements: 'Achievements',
     adButton: '📺 Watch Ad (+500 Gold)',
     prestige: 'Prestige / Reset',
     insufficientGold: 'Not enough gold!',
@@ -95,7 +94,7 @@ const translations = {
     kills: 'Bajas',
     shop: 'Tienda de Armas',
     talents: 'Árbol de Talentos',
-    achievements: 'Logros / Trofeos',
+    achievements: 'Logros',
     adButton: '📺 Ver Anuncio (+500 Oro)',
     prestige: 'Prestigio / Reiniciar',
     insufficientGold: '¡Oro insuficiente!',
@@ -140,7 +139,7 @@ export default function App() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
-      console.error('Erro ao salvar progresso', e);
+      console.error('Erro ao salvar', e);
     }
   }, [state]);
 
@@ -163,26 +162,17 @@ export default function App() {
 
   const handleAttack = (baseGold) => {
     const isCrit = Math.random() * 100 < state.critChance;
-    const multiplier = isCrit ? 2 : 1;
-    const earnedGold = Math.round(baseGold * state.damageMultiplier * state.weaponLevel * multiplier);
+    const earnedGold = Math.round(baseGold * state.damageMultiplier * state.weaponLevel * (isCrit ? 2 : 1));
 
-    if (isCrit) {
-      playSound('crit');
-    } else {
-      playSound('hit');
-    }
+    if (isCrit) playSound('crit');
+    else playSound('hit');
 
-    setState(prev => {
-      const newGold = prev.gold + earnedGold;
-      const newKills = prev.kills + 1;
-      const newLevel = Math.floor(newKills / 15) + 1;
-      return {
-        ...prev,
-        gold: newGold,
-        kills: newKills,
-        level: newLevel
-      };
-    });
+    setState(prev => ({
+      ...prev,
+      gold: prev.gold + earnedGold,
+      kills: prev.kills + 1,
+      level: Math.floor((prev.kills + 1) / 15) + 1
+    }));
 
     addFloatingText(isCrit ? `CRÍTICO! +${earnedGold}` : `+${earnedGold}`, isCrit ? 'crit' : 'gold');
   };
@@ -227,8 +217,7 @@ export default function App() {
     { id: 1, target: 10, reward: 200, title: 'Iniciante (10 Abates)' },
     { id: 2, target: 50, reward: 1000, title: 'Guerreiro (50 Abates)' },
     { id: 3, target: 100, reward: 3000, title: 'Lendário (100 Abates)' },
-    { id: 4, target: 250, reward: 7500, title: 'Mestre das Sombras (250 Abates)' },
-    { id: 5, target: 500, reward: 15000, title: 'Imortal (500 Abates)' }
+    { id: 4, target: 250, reward: 7500, title: 'Mestre (250 Abates)' }
   ];
 
   const claimAchievement = (ach) => {
@@ -249,16 +238,14 @@ export default function App() {
     { baseGold: 130, color: 'from-purple-900 to-indigo-950 border-purple-700' },
     { baseGold: 280, color: 'from-amber-900 to-yellow-950 border-amber-600' },
     { baseGold: 500, color: 'from-blue-900 to-cyan-950 border-blue-600' },
-    { baseGold: 1000, color: 'from-rose-950 to-orange-950 border-rose-600' },
-    { baseGold: 2200, color: 'from-emerald-900 to-green-950 border-emerald-600' },
-    { baseGold: 5000, color: 'from-violet-950 to-purple-950 border-violet-500' }
+    { baseGold: 1000, color: 'from-rose-950 to-orange-950 border-rose-600' }
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-amber-100 flex flex-col items-center justify-center p-3 font-sans select-none relative overflow-hidden touch-manipulation">
+    <div className="min-h-screen w-full bg-slate-950 text-amber-100 flex flex-col items-center justify-start p-2 font-sans select-none relative overflow-y-auto">
       
-      {/* Efeitos Flutuantes */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-20">
+      {/* Textos Flutuantes */}
+      <div className="fixed inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-50">
         {state.floatingTexts.map(item => (
           <span 
             key={item.id} 
@@ -266,8 +253,8 @@ export default function App() {
               item.type === 'crit' ? 'text-yellow-300 scale-125' : 'text-amber-400'
             }`}
             style={{
-              top: `${40 + (Math.random() * 20 - 10)}%`,
-              left: `${50 + (Math.random() * 30 - 15)}%`
+              top: `${40 + (Math.random() * 10 - 5)}%`,
+              left: `${50 + (Math.random() * 20 - 10)}%`
             }}
           >
             {item.text}
@@ -276,12 +263,12 @@ export default function App() {
       </div>
 
       {/* Idiomas */}
-      <div className="absolute top-3 right-3 flex gap-1 z-10">
+      <div className="w-full max-w-sm flex justify-end gap-1 mb-2 pt-1 z-30">
         {['PT', 'EN', 'ES'].map(lang => (
           <button 
             key={lang}
             onClick={() => setState(prev => ({ ...prev, language: lang }))}
-            className={`px-2 py-1 text-xs font-bold rounded-lg border transition cursor-pointer ${
+            className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition cursor-pointer ${
               state.language === lang 
                 ? 'bg-amber-500 text-slate-950 border-amber-400' 
                 : 'bg-slate-900 text-amber-300 border-amber-600/30'
@@ -292,11 +279,11 @@ export default function App() {
         ))}
       </div>
 
-      {/* Caixa do Jogo */}
-      <div className="w-full max-w-sm bg-slate-900/95 border border-amber-500/40 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 text-center backdrop-blur-sm max-h-[95vh] overflow-y-auto">
+      {/* Caixa do Jogo Principal */}
+      <div className="w-full max-w-sm bg-slate-900 border border-amber-500/40 rounded-2xl p-3 shadow-2xl flex flex-col gap-2.5 text-center mb-4 z-20">
         
         <div>
-          <h1 className="text-lg font-black text-amber-400 tracking-wide">
+          <h1 className="text-base font-black text-amber-400 tracking-wide">
             {state.playerName} ({t.level} {state.level})
           </h1>
           <p className="text-xs text-amber-200/80 mt-0.5 flex justify-center gap-3 font-semibold">
@@ -308,12 +295,12 @@ export default function App() {
         {/* Botão de Anúncio */}
         <button
           onClick={watchAdForGold}
-          className="bg-gradient-to-r from-emerald-700 to-teal-800 hover:brightness-110 border border-emerald-500/50 py-2.5 px-3 rounded-xl text-xs font-bold text-white shadow transition-transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full bg-gradient-to-r from-emerald-700 to-teal-800 border border-emerald-500/50 py-2 px-3 rounded-xl text-xs font-bold text-white shadow active:scale-95 cursor-pointer"
         >
-          <span>{t.adButton}</span>
+          {t.adButton}
         </button>
 
-        {/* Lista de Batalha (Com novos monstros) */}
+        {/* Lista de Batalha */}
         <div className="flex flex-col gap-1.5">
           {rawMonsters.map((m, idx) => {
             const monsterName = t.monsters[idx];
@@ -322,7 +309,7 @@ export default function App() {
               <button
                 key={idx}
                 onClick={() => handleAttack(m.baseGold)}
-                className={`bg-gradient-to-r ${m.color} hover:brightness-125 border py-2.5 px-3 rounded-xl text-xs font-bold text-white shadow transition-transform active:scale-95 flex justify-between items-center cursor-pointer`}
+                className={`w-full bg-gradient-to-r ${m.color} border py-2 px-3 rounded-xl text-xs font-bold text-white shadow active:scale-95 flex justify-between items-center cursor-pointer`}
               >
                 <span>👹 {monsterName}</span>
                 <span className="bg-black/40 px-2 py-0.5 rounded text-amber-300">+{reward}</span>
@@ -332,10 +319,10 @@ export default function App() {
         </div>
 
         {/* Lojas e Talentos */}
-        <div className="flex flex-col gap-1.5 mt-1">
+        <div className="flex flex-col gap-1.5">
           <button 
             onClick={buyWeapon}
-            className="bg-slate-800 hover:bg-slate-750 border border-blue-500/40 text-blue-300 py-2 px-3 rounded-xl text-xs font-semibold transition active:scale-95 flex justify-between items-center cursor-pointer"
+            className="w-full bg-slate-800 border border-blue-500/40 text-blue-300 py-2 px-3 rounded-xl text-xs font-semibold active:scale-95 flex justify-between items-center cursor-pointer"
           >
             <span>🏛️ {t.shop} (Nv. {state.weaponLevel})</span>
             <span className="text-amber-400 font-bold">{state.weaponLevel * 120} Ouro</span>
@@ -343,17 +330,17 @@ export default function App() {
 
           <button 
             onClick={buyTalent}
-            className="bg-slate-800 hover:bg-slate-750 border border-teal-500/40 text-teal-300 py-2 px-3 rounded-xl text-xs font-semibold transition active:scale-95 flex justify-between items-center cursor-pointer"
+            className="w-full bg-slate-800 border border-teal-500/40 text-teal-300 py-2 px-3 rounded-xl text-xs font-semibold active:scale-95 flex justify-between items-center cursor-pointer"
           >
             <span>✨ {t.talents} ({state.critChance}% Crit)</span>
             <span className="text-amber-400 font-bold">{state.critChance * 15} Ouro</span>
           </button>
         </div>
 
-        {/* Conquistas Expandidas */}
+        {/* Conquistas */}
         <div className="flex flex-col gap-1 bg-slate-950/60 p-2 rounded-xl border border-amber-500/20 text-left">
           <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5">🏆 {t.achievements}</span>
-          <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
+          <div className="flex flex-col gap-1">
             {achievementsList.map(ach => {
               const isUnlocked = state.kills >= ach.target;
               const isClaimed = state.claimedAchievements.includes(ach.id);
@@ -362,7 +349,7 @@ export default function App() {
                   key={ach.id}
                   onClick={() => claimAchievement(ach)}
                   disabled={!isUnlocked || isClaimed}
-                  className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex justify-between items-center transition ${
+                  className={`w-full py-1.5 px-2 rounded-lg text-xs font-semibold flex justify-between items-center transition ${
                     isClaimed 
                       ? 'bg-slate-900 text-slate-500 border border-slate-800' 
                       : isUnlocked 
@@ -386,7 +373,7 @@ export default function App() {
               localStorage.removeItem(STORAGE_KEY);
             }
           }}
-          className="bg-slate-900 hover:bg-red-950/40 border border-red-900/40 text-red-400 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
+          className="w-full bg-slate-900 border border-red-900/40 text-red-400 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-95"
         >
           👑 {t.prestige}
         </button>
