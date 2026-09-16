@@ -1,6 +1,48 @@
 import React, { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'caverna_do_dragao_rpg_v5';
+const STORAGE_KEY = 'caverna_do_dragao_rpg_v6';
+
+// Função utilitária para tocar efeitos sonoros simples (Web Audio API)
+const playSound = (type) => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'hit') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(150, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } else if (type === 'crit') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } else if (type === 'buy') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    }
+  } catch (e) {
+    // Ignora se o navegador bloquear autoplay de áudio antes de interagir
+  }
+};
 
 const translations = {
   PT: {
@@ -20,7 +62,9 @@ const translations = {
       'Dragão Sombrio', 
       'Lorde das Sombras', 
       'Mago Corrompido', 
-      'Titã do Caos'
+      'Titã do Caos',
+      'Hydra Infernal',
+      'Rei Esqueleto'
     ]
   },
   EN: {
@@ -40,7 +84,9 @@ const translations = {
       'Shadow Dragon', 
       'Shadow Lord', 
       'Corrupted Mage', 
-      'Chaos Titan'
+      'Chaos Titan',
+      'Hellish Hydra',
+      'Skeleton King'
     ]
   },
   ES: {
@@ -60,7 +106,9 @@ const translations = {
       'Dragón Sombrío', 
       'Señor de las Sombras', 
       'Mago Corrompido', 
-      'Titán del Caos'
+      'Titán del Caos',
+      'Hidra Infernal',
+      'Rey Esqueleto'
     ]
   }
 };
@@ -113,10 +161,16 @@ export default function App() {
     }, 1000);
   };
 
-  const handleAttack = (baseGold, monsterName) => {
+  const handleAttack = (baseGold) => {
     const isCrit = Math.random() * 100 < state.critChance;
     const multiplier = isCrit ? 2 : 1;
     const earnedGold = Math.round(baseGold * state.damageMultiplier * state.weaponLevel * multiplier);
+
+    if (isCrit) {
+      playSound('crit');
+    } else {
+      playSound('hit');
+    }
 
     setState(prev => {
       const newGold = prev.gold + earnedGold;
@@ -130,12 +184,13 @@ export default function App() {
       };
     });
 
-    addFloatingText(isCrit ? `CRÍTICO!` : `+${earnedGold}`, isCrit ? 'crit' : 'gold');
+    addFloatingText(isCrit ? `CRÍTICO! +${earnedGold}` : `+${earnedGold}`, isCrit ? 'crit' : 'gold');
   };
 
   const buyWeapon = () => {
     const cost = state.weaponLevel * 120;
     if (state.gold >= cost) {
+      playSound('buy');
       setState(prev => ({
         ...prev,
         gold: prev.gold - cost,
@@ -150,6 +205,7 @@ export default function App() {
   const buyTalent = () => {
     const cost = state.critChance * 15;
     if (state.gold >= cost) {
+      playSound('buy');
       setState(prev => ({
         ...prev,
         gold: prev.gold - cost,
@@ -162,6 +218,7 @@ export default function App() {
   };
 
   const watchAdForGold = () => {
+    playSound('buy');
     setState(prev => ({ ...prev, gold: prev.gold + 500 }));
     addFloatingText('+500 Ouro!', 'crit');
   };
@@ -169,11 +226,14 @@ export default function App() {
   const achievementsList = [
     { id: 1, target: 10, reward: 200, title: 'Iniciante (10 Abates)' },
     { id: 2, target: 50, reward: 1000, title: 'Guerreiro (50 Abates)' },
-    { id: 3, target: 100, reward: 3000, title: 'Lendário (100 Abates)' }
+    { id: 3, target: 100, reward: 3000, title: 'Lendário (100 Abates)' },
+    { id: 4, target: 250, reward: 7500, title: 'Mestre das Sombras (250 Abates)' },
+    { id: 5, target: 500, reward: 15000, title: 'Imortal (500 Abates)' }
   ];
 
   const claimAchievement = (ach) => {
     if (state.kills >= ach.target && !state.claimedAchievements.includes(ach.id)) {
+      playSound('buy');
       setState(prev => ({
         ...prev,
         gold: prev.gold + ach.reward,
@@ -189,14 +249,16 @@ export default function App() {
     { baseGold: 130, color: 'from-purple-900 to-indigo-950 border-purple-700' },
     { baseGold: 280, color: 'from-amber-900 to-yellow-950 border-amber-600' },
     { baseGold: 500, color: 'from-blue-900 to-cyan-950 border-blue-600' },
-    { baseGold: 1000, color: 'from-rose-950 to-orange-950 border-rose-600' }
+    { baseGold: 1000, color: 'from-rose-950 to-orange-950 border-rose-600' },
+    { baseGold: 2200, color: 'from-emerald-900 to-green-950 border-emerald-600' },
+    { baseGold: 5000, color: 'from-violet-950 to-purple-950 border-violet-500' }
   ];
 
   return (
     <div className="min-h-screen bg-slate-950 text-amber-100 flex flex-col items-center justify-center p-3 font-sans select-none relative overflow-hidden touch-manipulation">
       
       {/* Efeitos Flutuantes */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-20">
         {state.floatingTexts.map(item => (
           <span 
             key={item.id} 
@@ -251,7 +313,7 @@ export default function App() {
           <span>{t.adButton}</span>
         </button>
 
-        {/* Lista de Batalha */}
+        {/* Lista de Batalha (Com novos monstros) */}
         <div className="flex flex-col gap-1.5">
           {rawMonsters.map((m, idx) => {
             const monsterName = t.monsters[idx];
@@ -259,7 +321,7 @@ export default function App() {
             return (
               <button
                 key={idx}
-                onClick={() => handleAttack(m.baseGold, monsterName)}
+                onClick={() => handleAttack(m.baseGold)}
                 className={`bg-gradient-to-r ${m.color} hover:brightness-125 border py-2.5 px-3 rounded-xl text-xs font-bold text-white shadow transition-transform active:scale-95 flex justify-between items-center cursor-pointer`}
               >
                 <span>👹 {monsterName}</span>
@@ -288,10 +350,10 @@ export default function App() {
           </button>
         </div>
 
-        {/* Conquistas */}
+        {/* Conquistas Expandidas */}
         <div className="flex flex-col gap-1 bg-slate-950/60 p-2 rounded-xl border border-amber-500/20 text-left">
           <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5">🏆 {t.achievements}</span>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 max-h-36 overflow-y-auto">
             {achievementsList.map(ach => {
               const isUnlocked = state.kills >= ach.target;
               const isClaimed = state.claimedAchievements.includes(ach.id);
