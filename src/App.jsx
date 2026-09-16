@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'caverna_do_dragao_rpg_v4';
+const STORAGE_KEY = 'caverna_do_dragao_rpg_v5';
 
 const translations = {
   PT: {
@@ -10,6 +10,7 @@ const translations = {
     shop: 'Loja de Armas',
     talents: 'Árvore de Talentos',
     achievements: 'Conquistas / Troféus',
+    adButton: '📺 Assistir Anúncio (+500 Ouro)',
     prestige: 'Prestígio / Reset',
     insufficientGold: 'Ouro insuficiente!',
     resetConfirm: 'Deseja resetar o progresso atual?',
@@ -29,6 +30,7 @@ const translations = {
     shop: 'Weapon Shop',
     talents: 'Talent Tree',
     achievements: 'Achievements / Trophies',
+    adButton: '📺 Watch Ad (+500 Gold)',
     prestige: 'Prestige / Reset',
     insufficientGold: 'Not enough gold!',
     resetConfirm: 'Do you want to reset current progress?',
@@ -48,6 +50,7 @@ const translations = {
     shop: 'Tienda de Armas',
     talents: 'Árbol de Talentos',
     achievements: 'Logros / Trofeos',
+    adButton: '📺 Ver Anuncio (+500 Oro)',
     prestige: 'Prestigio / Reiniciar',
     insufficientGold: '¡Oro insuficiente!',
     resetConfirm: '¿Deseas reiniciar el progreso actual?',
@@ -149,7 +152,7 @@ export default function App() {
       setState(prev => ({
         ...prev,
         gold: prev.gold - cost,
-        critChance: prev.critChance + 5
+        critChance: state.critChance + 5
       }));
       addFloatingText('Crítico +5%!', 'crit');
     } else {
@@ -157,7 +160,14 @@ export default function App() {
     }
   };
 
-  // Sistema de Conquistas baseadas em abates
+  // Simulação / Acionador de Anúncio Bonificado (Monetização)
+  const watchAdForGold = () => {
+    // Aqui você integrará o AdMob SDK nativo do Capacitor no futuro
+    alert(state.language === 'EN' ? 'Ad simulated! You earned 500 Gold.' : 'Anúncio simulado assistido! Você ganhou 500 de Ouro.');
+    setState(prev => ({ ...prev, gold: prev.gold + 500 }));
+    addFloatingText('+500 Ouro (Ad)!', 'crit');
+  };
+
   const achievementsList = [
     { id: 1, target: 10, reward: 200, title: 'Iniciante (10 Abates)' },
     { id: 2, target: 50, reward: 1000, title: 'Guerreiro (50 Abates)' },
@@ -175,7 +185,6 @@ export default function App() {
     }
   };
 
-  // Lista expandida com 6 monstros (incluindo as novas categorias de chefões)
   const rawMonsters = [
     { baseGold: 30, color: 'from-red-900 to-red-950 border-red-700' },
     { baseGold: 65, color: 'from-slate-700 to-slate-900 border-slate-600' },
@@ -236,7 +245,15 @@ export default function App() {
           </p>
         </div>
 
-        {/* Lista de Batalha (Com os 6 Monstros) */}
+        {/* Botão de Monetização (Anúncio Bonificado) */}
+        <button
+          onClick={watchAdForGold}
+          className="bg-gradient-to-r from-emerald-700 to-teal-800 hover:brightness-110 border border-emerald-500/50 py-2 px-3 rounded-xl text-[11px] font-bold text-white shadow transition-transform active:scale-95 flex items-center justify-center gap-2"
+        >
+          <span>{t.adButton}</span>
+        </button>
+
+        {/* Lista de Batalha */}
         <div className="flex flex-col gap-1.5">
           {rawMonsters.map((m, idx) => {
             const monsterName = t.monsters[idx];
@@ -273,7 +290,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Seção de Conquistas / Troféus */}
+        {/* Seção de Conquistas */}
         <div className="flex flex-col gap-1 bg-slate-950/60 p-2 rounded-xl border border-amber-500/20 text-left">
           <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5">🏆 {t.achievements}</span>
           <div className="flex flex-col gap-1">
