@@ -118,18 +118,19 @@ export default function App() {
     const multiplier = isCrit ? 2 : 1;
     const earnedGold = Math.round(baseGold * state.damageMultiplier * state.weaponLevel * multiplier);
 
-    const newGold = state.gold + earnedGold;
-    const newKills = state.kills + 1;
-    const newLevel = Math.floor(newKills / 15) + 1;
+    setState(prev => {
+      const newGold = prev.gold + earnedGold;
+      const newKills = prev.kills + 1;
+      const newLevel = Math.floor(newKills / 15) + 1;
+      return {
+        ...prev,
+        gold: newGold,
+        kills: newKills,
+        level: newLevel
+      };
+    });
 
-    addFloatingText(isCrit ? `CRÍTICO! +${earnedGold}` : `+${earnedGold}`, isCrit ? 'crit' : 'gold');
-
-    setState(prev => ({
-      ...prev,
-      gold: newGold,
-      kills: newKills,
-      level: newLevel
-    }));
+    addFloatingText(isCrit ? `CRÍTICO!` : `+${earnedGold}`, isCrit ? 'crit' : 'gold');
   };
 
   const buyWeapon = () => {
@@ -152,7 +153,7 @@ export default function App() {
       setState(prev => ({
         ...prev,
         gold: prev.gold - cost,
-        critChance: state.critChance + 5
+        critChance: prev.critChance + 5
       }));
       addFloatingText('Crítico +5%!', 'crit');
     } else {
@@ -160,12 +161,9 @@ export default function App() {
     }
   };
 
-  // Simulação / Acionador de Anúncio Bonificado (Monetização)
   const watchAdForGold = () => {
-    // Aqui você integrará o AdMob SDK nativo do Capacitor no futuro
-    alert(state.language === 'EN' ? 'Ad simulated! You earned 500 Gold.' : 'Anúncio simulado assistido! Você ganhou 500 de Ouro.');
     setState(prev => ({ ...prev, gold: prev.gold + 500 }));
-    addFloatingText('+500 Ouro (Ad)!', 'crit');
+    addFloatingText('+500 Ouro!', 'crit');
   };
 
   const achievementsList = [
@@ -195,7 +193,7 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-amber-100 flex flex-col items-center justify-center p-3 font-sans select-none relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-amber-100 flex flex-col items-center justify-center p-3 font-sans select-none relative overflow-hidden touch-manipulation">
       
       {/* Efeitos Flutuantes */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
@@ -216,12 +214,12 @@ export default function App() {
       </div>
 
       {/* Idiomas */}
-      <div className="absolute top-3 right-3 flex gap-1">
+      <div className="absolute top-3 right-3 flex gap-1 z-10">
         {['PT', 'EN', 'ES'].map(lang => (
           <button 
             key={lang}
-            onClick={() => setState({ ...state, language: lang })}
-            className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border transition ${
+            onClick={() => setState(prev => ({ ...prev, language: lang }))}
+            className={`px-2 py-1 text-xs font-bold rounded-lg border transition cursor-pointer ${
               state.language === lang 
                 ? 'bg-amber-500 text-slate-950 border-amber-400' 
                 : 'bg-slate-900 text-amber-300 border-amber-600/30'
@@ -245,10 +243,10 @@ export default function App() {
           </p>
         </div>
 
-        {/* Botão de Monetização (Anúncio Bonificado) */}
+        {/* Botão de Anúncio */}
         <button
           onClick={watchAdForGold}
-          className="bg-gradient-to-r from-emerald-700 to-teal-800 hover:brightness-110 border border-emerald-500/50 py-2 px-3 rounded-xl text-[11px] font-bold text-white shadow transition-transform active:scale-95 flex items-center justify-center gap-2"
+          className="bg-gradient-to-r from-emerald-700 to-teal-800 hover:brightness-110 border border-emerald-500/50 py-2.5 px-3 rounded-xl text-xs font-bold text-white shadow transition-transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
         >
           <span>{t.adButton}</span>
         </button>
@@ -262,10 +260,10 @@ export default function App() {
               <button
                 key={idx}
                 onClick={() => handleAttack(m.baseGold, monsterName)}
-                className={`bg-gradient-to-r ${m.color} hover:brightness-125 border py-2 px-3 rounded-xl text-[11px] font-bold text-white shadow transition-transform active:scale-95 flex justify-between items-center`}
+                className={`bg-gradient-to-r ${m.color} hover:brightness-125 border py-2.5 px-3 rounded-xl text-xs font-bold text-white shadow transition-transform active:scale-95 flex justify-between items-center cursor-pointer`}
               >
                 <span>👹 {monsterName}</span>
-                <span className="bg-black/40 px-1.5 py-0.5 rounded text-amber-300">+{reward}</span>
+                <span className="bg-black/40 px-2 py-0.5 rounded text-amber-300">+{reward}</span>
               </button>
             );
           })}
@@ -275,7 +273,7 @@ export default function App() {
         <div className="flex flex-col gap-1.5 mt-1">
           <button 
             onClick={buyWeapon}
-            className="bg-slate-800 hover:bg-slate-750 border border-blue-500/40 text-blue-300 py-1.5 rounded-xl text-[11px] font-semibold transition active:scale-95 flex justify-between px-3"
+            className="bg-slate-800 hover:bg-slate-750 border border-blue-500/40 text-blue-300 py-2 px-3 rounded-xl text-xs font-semibold transition active:scale-95 flex justify-between items-center cursor-pointer"
           >
             <span>🏛️ {t.shop} (Nv. {state.weaponLevel})</span>
             <span className="text-amber-400 font-bold">{state.weaponLevel * 120} Ouro</span>
@@ -283,14 +281,14 @@ export default function App() {
 
           <button 
             onClick={buyTalent}
-            className="bg-slate-800 hover:bg-slate-750 border border-teal-500/40 text-teal-300 py-1.5 rounded-xl text-[11px] font-semibold transition active:scale-95 flex justify-between px-3"
+            className="bg-slate-800 hover:bg-slate-750 border border-teal-500/40 text-teal-300 py-2 px-3 rounded-xl text-xs font-semibold transition active:scale-95 flex justify-between items-center cursor-pointer"
           >
             <span>✨ {t.talents} ({state.critChance}% Crit)</span>
             <span className="text-amber-400 font-bold">{state.critChance * 15} Ouro</span>
           </button>
         </div>
 
-        {/* Seção de Conquistas */}
+        {/* Conquistas */}
         <div className="flex flex-col gap-1 bg-slate-950/60 p-2 rounded-xl border border-amber-500/20 text-left">
           <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5">🏆 {t.achievements}</span>
           <div className="flex flex-col gap-1">
@@ -302,7 +300,7 @@ export default function App() {
                   key={ach.id}
                   onClick={() => claimAchievement(ach)}
                   disabled={!isUnlocked || isClaimed}
-                  className={`py-1 px-2 rounded-lg text-[10px] font-semibold flex justify-between items-center transition ${
+                  className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex justify-between items-center transition ${
                     isClaimed 
                       ? 'bg-slate-900 text-slate-500 border border-slate-800' 
                       : isUnlocked 
@@ -318,7 +316,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Botão de Prestígio */}
+        {/* Prestígio */}
         <button 
           onClick={() => {
             if (confirm(t.resetConfirm)) {
@@ -326,7 +324,7 @@ export default function App() {
               localStorage.removeItem(STORAGE_KEY);
             }
           }}
-          className="bg-slate-900 hover:bg-red-950/40 border border-red-900/40 text-red-400 py-1 rounded-xl text-[10px] font-semibold transition"
+          className="bg-slate-900 hover:bg-red-950/40 border border-red-900/40 text-red-400 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
         >
           👑 {t.prestige}
         </button>
