@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'caverna_do_dragao_rpg_v7';
+const STORAGE_KEY = 'caverna_do_dragao_rpg_v8';
 
 const playSound = (type) => {
   try {
@@ -38,9 +38,7 @@ const playSound = (type) => {
       osc.start();
       osc.stop(ctx.currentTime + 0.2);
     }
-  } catch (e) {
-    // Ignora bloqueios de áudio do navegador
-  }
+  } catch (e) {}
 };
 
 const translations = {
@@ -61,9 +59,7 @@ const translations = {
       'Dragão Sombrio', 
       'Lorde das Sombras', 
       'Mago Corrompido', 
-      'Titã do Caos',
-      'Hydra Infernal',
-      'Rei Esqueleto'
+      'Titã do Caos'
     ]
   },
   EN: {
@@ -83,9 +79,7 @@ const translations = {
       'Shadow Dragon', 
       'Shadow Lord', 
       'Corrupted Mage', 
-      'Chaos Titan',
-      'Hellish Hydra',
-      'Skeleton King'
+      'Chaos Titan'
     ]
   },
   ES: {
@@ -105,9 +99,7 @@ const translations = {
       'Dragón Sombrío', 
       'Señor de las Sombras', 
       'Mago Corrompido', 
-      'Titán del Caos',
-      'Hidra Infernal',
-      'Rey Esqueleto'
+      'Titán del Caos'
     ]
   }
 };
@@ -138,9 +130,7 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error('Erro ao salvar', e);
-    }
+    } catch (e) {}
   }, [state]);
 
   const t = translations[state.language] || translations.PT;
@@ -157,7 +147,7 @@ export default function App() {
         ...prev,
         floatingTexts: prev.floatingTexts.filter(item => item.id !== id)
       }));
-    }, 1000);
+    }, 800);
   };
 
   const handleAttack = (baseGold) => {
@@ -216,8 +206,7 @@ export default function App() {
   const achievementsList = [
     { id: 1, target: 10, reward: 200, title: 'Iniciante (10 Abates)' },
     { id: 2, target: 50, reward: 1000, title: 'Guerreiro (50 Abates)' },
-    { id: 3, target: 100, reward: 3000, title: 'Lendário (100 Abates)' },
-    { id: 4, target: 250, reward: 7500, title: 'Mestre (250 Abates)' }
+    { id: 3, target: 100, reward: 3000, title: 'Lendário (100 Abates)' }
   ];
 
   const claimAchievement = (ach) => {
@@ -242,28 +231,10 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 text-amber-100 flex flex-col items-center justify-start p-2 font-sans select-none relative overflow-y-auto">
+    <div className="min-h-screen w-full bg-slate-950 text-amber-100 flex flex-col items-center justify-start p-3 font-sans select-none relative">
       
-      {/* Textos Flutuantes */}
-      <div className="fixed inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-50">
-        {state.floatingTexts.map(item => (
-          <span 
-            key={item.id} 
-            className={`absolute animate-bounce text-sm font-black drop-shadow-lg ${
-              item.type === 'crit' ? 'text-yellow-300 scale-125' : 'text-amber-400'
-            }`}
-            style={{
-              top: `${40 + (Math.random() * 10 - 5)}%`,
-              left: `${50 + (Math.random() * 20 - 10)}%`
-            }}
-          >
-            {item.text}
-          </span>
-        ))}
-      </div>
-
       {/* Idiomas */}
-      <div className="w-full max-w-sm flex justify-end gap-1 mb-2 pt-1 z-30">
+      <div className="w-full max-w-sm flex justify-end gap-1 mb-2 z-10">
         {['PT', 'EN', 'ES'].map(lang => (
           <button 
             key={lang}
@@ -280,8 +251,26 @@ export default function App() {
       </div>
 
       {/* Caixa do Jogo Principal */}
-      <div className="w-full max-w-sm bg-slate-900 border border-amber-500/40 rounded-2xl p-3 shadow-2xl flex flex-col gap-2.5 text-center mb-4 z-20">
+      <div className="w-full max-w-sm bg-slate-900 border border-amber-500/40 rounded-2xl p-3 shadow-2xl flex flex-col gap-2.5 text-center relative z-20">
         
+        {/* Textos Flutuantes Isolados Apenas na Área do Card */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
+          {state.floatingTexts.map(item => (
+            <span 
+              key={item.id} 
+              className={`absolute animate-bounce text-xs font-black drop-shadow-lg ${
+                item.type === 'crit' ? 'text-yellow-300 scale-110' : 'text-amber-400'
+              }`}
+              style={{
+                top: `${30 + Math.random() * 40}%`,
+                left: `${20 + Math.random() * 60}%`
+              }}
+            >
+              {item.text}
+            </span>
+          ))}
+        </div>
+
         <div>
           <h1 className="text-base font-black text-amber-400 tracking-wide">
             {state.playerName} ({t.level} {state.level})
@@ -295,13 +284,13 @@ export default function App() {
         {/* Botão de Anúncio */}
         <button
           onClick={watchAdForGold}
-          className="w-full bg-gradient-to-r from-emerald-700 to-teal-800 border border-emerald-500/50 py-2 px-3 rounded-xl text-xs font-bold text-white shadow active:scale-95 cursor-pointer"
+          className="w-full bg-gradient-to-r from-emerald-700 to-teal-800 border border-emerald-500/50 py-2.5 px-3 rounded-xl text-xs font-bold text-white shadow active:scale-95 cursor-pointer z-40 relative"
         >
           {t.adButton}
         </button>
 
         {/* Lista de Batalha */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 z-40 relative">
           {rawMonsters.map((m, idx) => {
             const monsterName = t.monsters[idx];
             const reward = Math.round(m.baseGold * state.weaponLevel);
@@ -319,7 +308,7 @@ export default function App() {
         </div>
 
         {/* Lojas e Talentos */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 z-40 relative">
           <button 
             onClick={buyWeapon}
             className="w-full bg-slate-800 border border-blue-500/40 text-blue-300 py-2 px-3 rounded-xl text-xs font-semibold active:scale-95 flex justify-between items-center cursor-pointer"
@@ -338,7 +327,7 @@ export default function App() {
         </div>
 
         {/* Conquistas */}
-        <div className="flex flex-col gap-1 bg-slate-950/60 p-2 rounded-xl border border-amber-500/20 text-left">
+        <div className="flex flex-col gap-1 bg-slate-950/60 p-2 rounded-xl border border-amber-500/20 text-left z-40 relative">
           <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5">🏆 {t.achievements}</span>
           <div className="flex flex-col gap-1">
             {achievementsList.map(ach => {
@@ -373,7 +362,7 @@ export default function App() {
               localStorage.removeItem(STORAGE_KEY);
             }
           }}
-          className="w-full bg-slate-900 border border-red-900/40 text-red-400 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-95"
+          className="w-full bg-slate-900 border border-red-900/40 text-red-400 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-95 z-40 relative"
         >
           👑 {t.prestige}
         </button>
