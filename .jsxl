@@ -1,0 +1,85 @@
+import React, { useState } from 'react';
+
+const translations = {
+  pt: {
+    level: "Nível",
+    gold: "Ouro",
+    kills: "Abates",
+    monsters: {
+      orc: "Orc Guerreiro",
+      golem: "Golem de Pedra",
+      dragon: "Dragão Sombrio",
+      shadowLord: "Lorde das Sombras"
+    },
+    menus: {
+      weaponShop: "Loja de Armas",
+      talentTree: "Árvore de Talentos",
+      prestigeSystem: "Sistema de Prestígio"
+    }
+  },
+  en: {
+    level: "Level",
+    gold: "Gold",
+    kills: "Kills",
+    monsters: {
+      orc: "Warrior Orc",
+      golem: "Stone Golem",
+      dragon: "Shadow Dragon",
+      shadowLord: "Shadow Lord"
+    },
+    menus: {
+      weaponShop: "Weapon Shop",
+      talentTree: "Talent Tree",
+      prestigeSystem: "Prestige System"
+    }
+  },
+  es: {
+    level: "Nivel",
+    gold: "Oro",
+    kills: "Bajas",
+    monsters: {
+      orc: "Orco Guerrero",
+      golem: "Gólem de Piedra",
+      dragon: "Dragón Sombrío",
+      shadowLord: "Señor de las Sombras"
+    },
+    menus: {
+      weaponShop: "Tienda de Armas",
+      talentTree: "Árbol de Talentos",
+      prestigeSystem: "Sistema de Prestigio"
+    }
+  }
+};
+
+export default function GameScreen() {
+  const [lang, setLang] = useState('pt'); // 'pt', 'en' ou 'es'
+  const t = translations[lang];
+
+  return (
+    <div className="game-container">
+      {/* Seletor de Idioma */}
+      <div className="language-selector">
+        <button onClick={() => setLang('pt')}>PT</button>
+        <button onClick={() => setLang('en')}>EN</button>
+        <button onClick={() => setLang('es')}>ES</button>
+      </div>
+
+      {/* Card do Personagem */}
+      <div className="profile-card">
+        <h2>Hank ({t.level} 1)</h2>
+        <p>50 {t.gold} • 0 {t.kills}</p>
+
+        {/* Botões de Batalha */}
+        <button>{t.monsters.orc} (+30 {t.gold})</button>
+        <button>{t.monsters.golem} (+65 {t.gold})</button>
+        <button>{t.monsters.dragon} (+130 {t.gold})</button>
+        <button>{t.monsters.shadowLord} (+280 {t.gold})</button>
+
+        {/* Menus */}
+        <button>{t.menus.weaponShop}</button>
+        <button>{t.menus.talentTree}</button>
+        <button>{t.menus.prestigeSystem}</button>
+      </div>
+    </div>
+  );
+}
